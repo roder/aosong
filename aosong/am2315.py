@@ -1,92 +1,41 @@
-"""---------------------------------------------------------------------------
-aosong_am2315.py
+"""
+Python wrapper exposes the capabilities of the AOSONG AM2315 humidity
+and temperature sensor.
+The datasheet for the device can be found here:
+http://www.adafruit.com/datasheets/AM2315.pdf
 
-Written by Sopwith
-03 May 2014
+Portions of this code were inspired by Joehrg Ehrsam's am2315-python-api
+code. http://code.google.com/p/am2315-python-api/
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted. Use of this software for illegal or
-malicious purposed is strictly prohibited. Attribution to the creator(s)
-is appreciated but not required.
+This library was originally authored by Sopwith:
+    http://sopwith.ismellsmoke.net/?p=104
 
-THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#-----------------------------------------------------------------------------
- Python application that wraps the capabilities of the AOSONG AM2315 humidity
- and temperature sensor.
- The datasheet for the device can be found here:
- http://www.adafruit.com/datasheets/AM2315.pdf
-#-----------------------------------------------------------------------------
-
-#-----------------------------------------------------------------------------
- NOTE: Portions of this code were inspired by Joehrg Ehrsam's am2315-python-api
-       code. http://code.google.com/p/am2315-python-api/
-#-----------------------------------------------------------------------------
-
-#-----------------------------------------------------------------------------
- Revision history:
- 	 2014-09-16 - Fixed negative temperature masking error
-     2014-05-01 - Initial release
-#--------------------------------------------------------------------------"""
+"""
 import quick2wire.i2c as i2c
 import time
 import array
 import math
 
-def main():
-
-    sensor = AOSONG_AM2315()
-
-    print('Pi version = ', sensor.pi_rev)
-    print('Sensor is on channel ', sensor.channel, sep='')
-
-    print()
-    print('ReadSensorData() = ', sensor.ReadSensorData(), sep='')
-    data = sensor.ReadSensorData()
-    print('Humidity = ', data[0], '%', sep='')
-    print('Temperature = ', data[1], 'C', sep='')
-    print('Temperature = ', data[2], 'F', sep='')
-
-    print()
-
-    print('ReadHumidity() = ', sensor.ReadHumidity())
-    print('lastError: ', sensor.lastError)
-    print('ReadTemperature() = ', sensor.ReadTemperature())
-    # Pass True to ReadTemperature() to read temp in degrees Fahrenheit
-    print('ReadTemperature(True) = ', sensor.ReadTemperature(True))
-    print('lastError: ', sensor.lastError)
-    
-class AOSONG_AM2315:
+class Sensor:
     """Wrapping for an AOSONG AM2315 humidity and temperature sensor.
 
     Provides simple access to a AM2315 chip using the quickwire i2c module
     Attributes:
         channel:   Int containing the smbus channel.
         address:   AM2315 bus address
-        pi_rev:    Int containing Pi board revision.
         bus:       quickwire i2c object instance.
         lastError: String containing the last error string.Formatter
         debug:     bool containing debug state
     """
     def __init__(self, address=0x5C, debug=False):
-        self.version = 1.0
-        self.channel = self.GetPiI2CBusNumber()   # 0 for pi Rev-1, 1 for pi Rev-2
+        self.channel = self.pi_i2c_bus_number()   # 0 for pi Rev-1, 1 for pi Rev-2
         self.address = address   				  # Default address 0x5C
-        self.pi_rev = self.GetPiRevision()		  # Pi board revision number  
         self.bus = i2c.I2CMaster() 				  # quick2wire master
         self.lastError = None   				  # Contains last error string
 
         self.debug = debug       				  # Debug flag
 
-    def GetPiRevision(self):
+    def pi_revision(self):
         """Get the version number of the Raspberry Pi board.
     
         Args:
@@ -98,7 +47,7 @@ class AOSONG_AM2315:
         """
         return i2c.revision()
 
-    def GetPiI2CBusNumber(self):
+    def pi_i2c_bus_number(self):
         """Get the I2C bus number /dev/i2c.
        
         Args:
@@ -111,7 +60,7 @@ class AOSONG_AM2315:
         else:
             return 0
 
-    def ReadSensorData(self):
+    def data(self):
         """ Reads the humidity and temperature from the AS2315.
 
         Args:
@@ -170,13 +119,13 @@ class AOSONG_AM2315:
         temp_H &=0x7F
 
         tempC = (temp_H*256+temp_L)/10
-        tempF = self.CelsiusToFahrenheit(tempC)
+        tempF = self.c_to_f(tempC)
 
         # Verify CRC here
 
         crc = 256*data[7] + data[6]
         t = bytearray([data[0], data[1], data[2], data[3], data[4], data[5]])
-        c = self.VerifyCRC(t)
+        c = self.verify_crc(t)
 
         if crc != c:
             assert(0)
@@ -190,7 +139,7 @@ class AOSONG_AM2315:
         return (humidity, tempC, tempF)
 
 
-    def ReadHumidity(self):
+    def humidity(self):
         """Read humidity data from the sensor.
 
         Args:
@@ -199,12 +148,12 @@ class AOSONG_AM2315:
             float = humidity reading, None if error
         """
         time.sleep(.25)
-        data = self.ReadSensorData()
+        data = self.data()
         if data != None:
-            return self.ReadSensorData()[0]
+            return self.data()[0]
         return None
 
-    def ReadTemperature(self, fahrenheit=False):
+    def temperature(self, fahrenheit=False):
         """Read temperature data from the sensor. (Celsius is default)
 
         Args:
@@ -213,15 +162,20 @@ class AOSONG_AM2315:
             float = humidity reading, None if error
         """
         time.sleep(.25)
-        data = self.ReadSensorData()
+        data = self.data()
         if data == None:
             return None
         if fahrenheit:
-            return self.ReadSensorData()[2]
-        return self.ReadSensorData()[1]
+            return self.data()[2]
+        return self.data()[1]
 
+    def fahrenheit(self):
+        return self.temperature(True)
 
-    def VerifyCRC(self, char):
+    def celsius(self):
+        return self.temperature()
+
+    def verify_crc(self, char):
         """Returns the 16-bit CRC of sensor data"""
         crc = 0xFFFF
         for l in char:
@@ -235,7 +189,7 @@ class AOSONG_AM2315:
         return crc
 
 
-    def CelsiusToFahrenheit(self, celsius):
+    def c_to_f(self, celsius):
         """Convert Celsius to Fahrenheit.
 
         Params:
@@ -259,9 +213,6 @@ class AOSONG_AM2315:
             return None
 
     
-    def GetLastError(self):
+    def last_error(self):
         return self.lastError
-    
-if __name__ == "__main__":
-    main()
     
