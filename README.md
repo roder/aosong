@@ -22,7 +22,7 @@ to provide a pythonic library that can be installed with `pip` and `setuptools`.
 
 ### Recommended
 ```shell
-pip install -e git+https://github.com/roder/aosong@0.0.1
+pip install --process-dependency-links aosong
 ```
 
 ### Manual
@@ -63,7 +63,7 @@ The third value is the current temperature in Fahrenheit.
 Sensor.temperature() returns the current temperature in Celsius.
 
 If you want the current temperature returned in Fahrenheit pass True as a parameter.
-    
+
 `sensor.temperature(True)`
 
 ## Test script:
@@ -80,4 +80,3 @@ Pull requests and Issues are welcome!
 Otherwise, please feel free to report bugs, comments, enhancement requests to:
 [sopwith@ismellsmoke.net](mailto:sopwith@ismellsmoke.net)
 [http://sopwith.ismellsmoke.net](http://sopwith.ismellsmoke.net)
-

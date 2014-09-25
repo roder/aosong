@@ -1,1 +1,0 @@
--e git+https://github.com/quick2wire/quick2wire-python-api.git@c5e21e9d804012efd9d214d18909034b4b898c96#egg=quick2wire_api-master

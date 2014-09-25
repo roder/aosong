@@ -1,4 +1,18 @@
 """
+Copyright 2014 Matt Heitzenroder
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 Python wrapper exposes the capabilities of the AOSONG AM2315 humidity
 and temperature sensor.
 The datasheet for the device can be found here:
@@ -37,7 +51,7 @@ class Sensor:
 
     def pi_revision(self):
         """Get the version number of the Raspberry Pi board.
-    
+
         Args:
             None
         Returns:
@@ -49,7 +63,7 @@ class Sensor:
 
     def pi_i2c_bus_number(self):
         """Get the I2C bus number /dev/i2c.
-       
+
         Args:
             None
         Returns:
@@ -95,7 +109,7 @@ class Sensor:
         if data[0] != 0x03 and data[1] != 0x04:
             self.lastError('Error reading data from AM2315 device.')
             return None
-    
+
         # Parse the data list
         cmd_code = data[0]
         byte_cnt = data[1]
@@ -131,7 +145,7 @@ class Sensor:
             assert(0)
             self.lastError('CRC error in sensor data.')
             return None
-        
+
         if negative:
             tempC = -abs(tempC)
             tempF = -abs(tempF)
@@ -212,7 +226,6 @@ class Sensor:
             self.lastError = 'Error converting %s celsius to fahrenheit' % celsius
             return None
 
-    
+
     def last_error(self):
         return self.lastError
-    
